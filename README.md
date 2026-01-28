@@ -1,59 +1,33 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Laravel Order Processing System (High-Concurrency Demo)
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+## Overview
+This repository demonstrates a robust, ACID-compliant order processing system designed for high-accuracy environments (e.g., Healthcare or Fintech). 
 
-## About Laravel
+It implements the **Service-Repository pattern** to decouple business logic from the HTTP layer, ensuring the order processing logic is reusable across different interfaces (API, Web, CLI).
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+**Key Features:**
+* **Concurrency Control:** Uses `lockForUpdate()` (Pessimistic Locking) to prevent race conditions during high-traffic inventory deduction.
+* **Data Integrity:** Full Database Transactions ensure that order creation, stock deduction, and line-item generation strictly succeed or fail together.
+* **Validation:** FormRequests separate validation rules from controller logic.
+* **Frontend:** A reactive vanilla JS frontend interacting with the API.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Architecture Decisions
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+### 1. Pessimistic Locking (`lockForUpdate`)
+In a medical supply or financial context, "eventual consistency" is often unacceptable. I chose pessimistic locking over optimistic locking to guarantee that inventory is strictly reserved at the moment of processing. This prevents the "overselling" scenario where two users purchase the last unit simultaneously.
 
-## Learning Laravel
+### 2. Service Layer
+The `OrderProcessingService` handles the raw business logic. This allows us to:
+* Unit test the logic without mocking HTTP requests.
+* Trigger orders from background jobs (Queues) or CLI commands without code duplication.
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+### 3. Dependency Injection
+Dependencies (like the Service) are injected into the Controller. In a production environment, this allows us to easily swap implementations (e.g., swapping `OrderProcessingService` for `MockOrderService` during Feature Tests).
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+## Installation & Setup
 
-## Laravel Sponsors
+This demo is designed to run with **SQLite** for zero-dependency testing.
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
-
-### Premium Partners
-
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
-
-## Contributing
-
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
-
-## Code of Conduct
-
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
-
-## Security Vulnerabilities
-
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
-
-## License
-
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+1. **Clone & Install Dependencies**
+   ```bash
+   composer install
